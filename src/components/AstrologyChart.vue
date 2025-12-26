@@ -51,13 +51,44 @@ const selectPalace = (index) => {
 
 const centerInfo = computed(() => {
     if(!props.astrolabe) return {};
+
+    // Extract SiHua
+    const sihuaMap = { '祿': '', '權': '', '科': '', '忌': '' };
+    props.astrolabe.palaces.forEach(p => {
+        p.majorStars.forEach(s => {
+            if (s.mutagen) {
+                const tradMutagen = toTraditional(s.mutagen);
+                if (['祿', '權', '科', '忌'].includes(tradMutagen)) {
+                    sihuaMap[tradMutagen] = toTraditional(s.name) + '化' + tradMutagen;
+                }
+            }
+        });
+        p.minorStars.forEach(s => { // sometimes minor stars have mutagen too
+             if (s.mutagen) {
+                const tradMutagen = toTraditional(s.mutagen);
+                if (['祿', '權', '科', '忌'].includes(tradMutagen)) {
+                    sihuaMap[tradMutagen] = toTraditional(s.name) + '化' + tradMutagen;
+                }
+            }
+        });
+    });
+    
+    // Order: Lu, Quan, Ke, Ji
+    const sihuaString = [sihuaMap['祿'], sihuaMap['權'], sihuaMap['科'], sihuaMap['忌']].filter(Boolean).join(',');
+
+    // BaZi: Year, Month, Day, Hour
+    const baziParts = props.astrolabe.chineseDate.split(' ');
+
     return {
         solarDate: toTraditional(props.astrolabe.solarDate),
         lunarDate: toTraditional(props.astrolabe.lunarDate),
+        chineseDate: toTraditional(props.astrolabe.chineseDate),
         gender: toTraditional(props.astrolabe.gender),
         fiveElementsClass: toTraditional(props.astrolabe.fiveElementsClass),
         soul: toTraditional(props.astrolabe.soul),
-        body: toTraditional(props.astrolabe.body)
+        body: toTraditional(props.astrolabe.body),
+        sihua: sihuaString,
+        bazi: baziParts
     }
 })
 
@@ -70,19 +101,42 @@ const centerInfo = computed(() => {
         <!-- Center Area -->
         <div class="center-area">
           <div class="info-content">
-            <div class="info-row">
-              <span>陽曆：{{ centerInfo.solarDate }}</span>
+            <div class="info-row left-align">
+              <span>陽曆︰{{ centerInfo.solarDate }}</span>
+              <span class="gender">{{ centerInfo.gender }}</span>
             </div>
-            <div class="info-row">
-              <span>農曆：{{ centerInfo.lunarDate }}</span>
+            <div class="info-row left-align">
+              <span>農曆︰{{ centerInfo.lunarDate }}</span>
             </div>
-            <div class="info-row">
-              <span>{{ centerInfo.gender }}</span>
-              <span>{{ centerInfo.fiveElementsClass }}</span>
+            
+            <!-- BaZi Section -->
+            <div class="bazi-section" v-if="centerInfo.bazi && centerInfo.bazi.length === 4">
+                <div class="bazi-column">
+                    <span class="bazi-label">年柱</span>
+                    <span class="bazi-value">{{ centerInfo.bazi[0] }}</span>
+                </div>
+                <div class="bazi-column">
+                    <span class="bazi-label">月柱</span>
+                    <span class="bazi-value">{{ centerInfo.bazi[1] }}</span>
+                </div>
+                <div class="bazi-column">
+                    <span class="bazi-label">日柱</span>
+                    <span class="bazi-value">{{ centerInfo.bazi[2] }}</span>
+                </div>
+                <div class="bazi-column">
+                    <span class="bazi-label">時柱</span>
+                    <span class="bazi-value">{{ centerInfo.bazi[3] }}</span>
+                </div>
             </div>
-            <div class="info-row">
-              <span>命主：{{ centerInfo.soul }}</span>
-              <span>身主：{{ centerInfo.body }}</span>
+
+            <div class="info-row left-align">
+              <span>五行局: {{ centerInfo.fiveElementsClass }}</span>
+            </div>
+            <div class="info-row left-align text-wrap">
+              <span>生年四化: {{ centerInfo.sihua }}</span>
+            </div>
+             <div class="info-row left-align">
+              <span>命主: {{ centerInfo.soul }}, 身主: {{ centerInfo.body }}</span>
             </div>
           </div>
         </div>
@@ -164,28 +218,27 @@ const centerInfo = computed(() => {
 .chart-wrapper {
   display: flex;
   flex-direction: column;
-  height: 100%;
   width: 100%;
 }
 
 .chart-container {
   width: 100%;
-  height: 60%;
+  /* Use aspect-ratio to keep it square-ish or just auto height */
+  aspect-ratio: 1 / 1; 
+  max-width: 800px; /* Limit max width for large screens */
+  margin: 0 auto;
   box-sizing: border-box;
   background-color: #fff;
   border: 2px solid #000;
   font-family: "PMingLiU", "MingLiU", serif;
-  overflow: hidden;
   flex-shrink: 0;
 }
 
 .detail-container {
-  flex-grow: 1;
-  height: 40%;
-  overflow: hidden;
-  border-left: 2px solid #000;
-  border-right: 2px solid #000;
-  border-bottom: 2px solid #000;
+  width: 100%;
+  margin-top: 1rem;
+  overflow: visible;
+  border: 2px solid #000;
 }
 
 .grid-12 {
@@ -221,6 +274,47 @@ const centerInfo = computed(() => {
   gap: 0.5rem;
   flex-wrap: wrap;
   justify-content: center;
+}
+
+.info-row.left-align {
+  justify-content: flex-start;
+  width: 100%;
+  padding-left: 5%;
+  box-sizing: border-box;
+}
+
+.info-row.text-wrap {
+  white-space: normal;
+  word-wrap: break-word; /* Ensure text wraps */
+  overflow-wrap: break-word;
+}
+
+.bazi-section {
+  display: flex;
+  justify-content: space-around;
+  width: 95%;
+  margin: 0.5rem auto;
+  padding: 0.5rem 0;
+  background-color: #fff1f2; /* Light accent */
+  border-radius: 4px;
+}
+
+.bazi-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.bazi-label {
+  font-size: 0.8rem;
+  color: #666;
+  margin-bottom: 2px;
+}
+
+.bazi-value {
+  font-weight: bold;
+  color: #000;
+  font-size: 1.1rem;
 }
 
 /* Palace Card */
@@ -363,8 +457,8 @@ const centerInfo = computed(() => {
 }
 
 @media (max-width: 768px) {
-  .chart-container { height: 50%; }
-  .detail-container { height: 50%; }
+  /* .chart-container { height: 50%; } - removed to allow auto height */
+  /* .detail-container { height: 50%; } - removed to allow auto height */
   .palace-card { font-size: 0.7rem; }
   .star.major { font-size: 0.8rem; }
   .star.minor { font-size: 0.7rem; }

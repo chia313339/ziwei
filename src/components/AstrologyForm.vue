@@ -1,10 +1,11 @@
 <script setup>
 import { ref } from 'vue'
+import dayjs from 'dayjs'
 
 const emit = defineEmits(['submit'])
 
 const formData = ref({
-  date: '',
+  date: dayjs().format('YYYY-MM-DD'),
   timeIndex: 0,
   gender: 'male'
 })

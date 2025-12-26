@@ -42,11 +42,10 @@ const handleFormSubmit = (data) => {
 
 <style scoped>
 .app-container {
-  height: 100%;
+  min-height: 100vh;
   width: 100%;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
 }
 
 header {
@@ -54,6 +53,9 @@ header {
   background: #f1f5f9;
   border-bottom: 1px solid #cbd5e1;
   flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
 .empty-state {
@@ -67,7 +69,6 @@ header {
 main {
   flex-grow: 1;
   width: 100%;
-  overflow: hidden; /* Chart takes care of its own sizing */
   padding: 4px;
   box-sizing: border-box;
 }

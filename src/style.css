@@ -26,8 +26,7 @@ body {
   margin: 0;
   display: flex;
   min-width: 320px;
-  height: 100vh;
-  overflow: hidden; /* Prevent body scroll, layout handles it */
+  min-height: 100vh;
   background-color: var(--bg-color);
 }
 
